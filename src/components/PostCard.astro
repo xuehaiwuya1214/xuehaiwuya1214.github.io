@@ -1,0 +1,165 @@
+---
+import type { Post } from '../utils/posts';
+import { postUrl } from '../utils/posts';
+import { excerpt, readingTime, fmtDate } from '../utils/text';
+import Icon from './Icon.astro';
+
+interface Props {
+  post: Post;
+}
+
+const { post } = Astro.props;
+const url = postUrl(post);
+const summary = post.data.description ?? excerpt(post.body ?? '');
+const rt = readingTime(post.body ?? '');
+---
+
+<article class="post-card">
+  <div class="card-top">
+    <a class="category-link" href={`/categories/${post.data.category}/`}>
+      {post.data.category}
+    </a>
+    {
+      post.data.pinned && (
+        <span class="pin-badge">
+          <Icon name="pin" size={12} />
+          置顶
+        </span>
+      )
+    }
+  </div>
+  <h2 class="card-title">
+    <a href={url}>{post.data.title}</a>
+  </h2>
+  <p class="card-summary">{summary}</p>
+  <div class="card-meta">
+    <span class="meta-item">
+      <Icon name="calendar" size={13} />
+      <time datetime={post.data.date.toISOString()}>{fmtDate(post.data.date)}</time>
+    </span>
+    <span class="meta-item">
+      <Icon name="clock" size={13} />
+      {rt.minutes} 分钟
+    </span>
+    {
+      post.data.tags.length > 0 && (
+        <span class="card-tags">
+          {post.data.tags.slice(0, 3).map((tag) => (
+            <a class="tag-pill" href={`/tags/${tag}/`}>
+              {tag}
+            </a>
+          ))}
+        </span>
+      )
+    }
+  </div>
+</article>
+
+<style>
+  .post-card {
+    position: relative;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 26px 30px;
+    box-shadow: var(--shadow);
+    transition: box-shadow 0.25s ease, transform 0.25s ease, border-color 0.25s ease;
+  }
+
+  .post-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-lift);
+    border-color: var(--border-strong);
+  }
+
+  .card-top {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 6px;
+  }
+
+  .pin-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.74rem;
+    font-weight: 600;
+    color: var(--accent);
+    background: var(--accent-soft);
+    border-radius: 999px;
+    padding: 1px 9px;
+  }
+
+  .card-title {
+    margin: 0 0 8px;
+    font-family: var(--font-serif);
+    font-size: 1.35rem;
+    font-weight: 700;
+    line-height: 1.45;
+  }
+
+  .card-title a {
+    color: var(--text);
+    transition: color 0.18s ease;
+  }
+
+  .card-title a::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+  }
+
+  .post-card:hover .card-title a {
+    color: var(--accent);
+  }
+
+  .card-summary {
+    margin: 0 0 14px;
+    font-size: 0.92rem;
+    line-height: 1.8;
+    color: var(--text-secondary);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .card-meta {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 14px;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+  }
+
+  .meta-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .card-tags {
+    display: inline-flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  /* 标签、分类需要盖过整卡链接 */
+  .card-tags .tag-pill,
+  .category-link {
+    position: relative;
+    z-index: 1;
+  }
+
+  @media (max-width: 940px) {
+    .post-card {
+      padding: 20px 22px;
+    }
+
+    .card-title {
+      font-size: 1.2rem;
+    }
+  }
+</style>

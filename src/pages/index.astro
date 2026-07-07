@@ -1,0 +1,33 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PostCard from '../components/PostCard.astro';
+import Pagination from '../components/Pagination.astro';
+import { getPosts, sortForHome } from '../utils/posts';
+import { SITE } from '../site.config';
+
+const posts = sortForHome(await getPosts());
+const totalPages = Math.max(1, Math.ceil(posts.length / SITE.pageSize));
+const pagePosts = posts.slice(0, SITE.pageSize);
+---
+
+<BaseLayout>
+  <div class="post-list">
+    {pagePosts.map((post) => <PostCard post={post} />)}
+    {posts.length === 0 && <p class="empty">还没有文章，去 src/content/posts/ 写第一篇吧！</p>}
+  </div>
+  <Pagination current={1} total={totalPages} />
+</BaseLayout>
+
+<style>
+  .post-list {
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+  }
+
+  .empty {
+    color: var(--text-muted);
+    text-align: center;
+    padding: 60px 0;
+  }
+</style>

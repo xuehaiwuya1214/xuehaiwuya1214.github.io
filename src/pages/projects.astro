@@ -1,0 +1,169 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Icon from '../components/Icon.astro';
+import { SITE } from '../site.config';
+---
+
+<BaseLayout title="项目" description="我的开源项目">
+  <h1 class="page-title">项目</h1>
+  <p class="page-subtitle">
+    自动同步自 <a class="gh-link" href={SITE.github} target="_blank" rel="noopener">GitHub @{SITE.githubUser}</a> 的公开仓库。
+  </p>
+
+  <div id="repo-grid" class="repo-grid" data-user={SITE.githubUser}>
+    <p class="repo-status">正在从 GitHub 加载仓库列表…</p>
+  </div>
+</BaseLayout>
+
+<style>
+  .gh-link {
+    color: var(--accent);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .repo-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+  }
+
+  .repo-grid :global(.repo-status) {
+    grid-column: 1 / -1;
+    color: var(--text-muted);
+    text-align: center;
+    padding: 40px 0;
+  }
+
+  .repo-grid :global(.repo-status a) {
+    color: var(--accent);
+    text-decoration: underline;
+  }
+
+  .repo-grid :global(.repo-card) {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 20px 22px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    box-shadow: var(--shadow);
+    transition: all 0.2s ease;
+  }
+
+  .repo-grid :global(.repo-card:hover) {
+    transform: translateY(-3px);
+    border-color: var(--accent);
+    box-shadow: var(--shadow-lift);
+  }
+
+  .repo-grid :global(.repo-name) {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 700;
+    font-size: 1.02rem;
+    color: var(--text);
+    font-family: var(--font-mono);
+  }
+
+  .repo-grid :global(.repo-card:hover .repo-name) {
+    color: var(--accent);
+  }
+
+  .repo-grid :global(.repo-desc) {
+    flex: 1;
+    margin: 0;
+    font-size: 0.86rem;
+    color: var(--text-secondary);
+    line-height: 1.7;
+  }
+
+  .repo-grid :global(.repo-meta) {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+  }
+
+  .repo-grid :global(.repo-meta span) {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .repo-grid :global(.lang-dot) {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+  }
+</style>
+
+<script>
+  const grid = document.getElementById('repo-grid')!;
+  const user = grid.dataset.user!;
+
+  const LANG_COLORS: Record<string, string> = {
+    Python: '#3572A5',
+    'Jupyter Notebook': '#DA5B0B',
+    JavaScript: '#f1e05a',
+    TypeScript: '#3178c6',
+    HTML: '#e34c26',
+    CSS: '#663399',
+    'C++': '#f34b7d',
+    C: '#555555',
+    Java: '#b07219',
+    Go: '#00ADD8',
+    Rust: '#dea584',
+    Shell: '#89e051',
+    Astro: '#ff5a03',
+  };
+
+  function esc(s: string): string {
+    return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  async function load() {
+    try {
+      const res = await fetch(
+        `https://api.github.com/users/${user}/repos?sort=updated&per_page=100`
+      );
+      if (!res.ok) throw new Error(`GitHub API ${res.status}`);
+      const repos = (await res.json()) as any[];
+      const list = repos
+        .filter((r) => !r.fork || r.stargazers_count > 0)
+        .sort((a, b) => b.stargazers_count - a.stargazers_count || +new Date(b.pushed_at) - +new Date(a.pushed_at));
+      if (list.length === 0) {
+        grid.innerHTML = `<p class="repo-status">暂无公开仓库。</p>`;
+        return;
+      }
+      grid.innerHTML = list
+        .map(
+          (r) => `
+        <a class="repo-card" href="${r.html_url}" target="_blank" rel="noopener">
+          <span class="repo-name">${esc(r.name)}</span>
+          <p class="repo-desc">${esc(r.description ?? '这个仓库还没有描述。')}</p>
+          <div class="repo-meta">
+            ${
+              r.language
+                ? `<span><i class="lang-dot" style="background:${
+                    LANG_COLORS[r.language] ?? 'var(--text-muted)'
+                  }"></i>${esc(r.language)}</span>`
+                : ''
+            }
+            <span>★ ${r.stargazers_count}</span>
+            <span>⑂ ${r.forks_count}</span>
+          </div>
+        </a>`
+        )
+        .join('');
+    } catch {
+      grid.innerHTML = `<p class="repo-status">加载失败（GitHub API 可能暂时不可达）。<br/>可以直接访问 <a href="https://github.com/${user}?tab=repositories" target="_blank" rel="noopener">github.com/${user}</a> 查看全部仓库。</p>`;
+    }
+  }
+
+  load();
+</script>

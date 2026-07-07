@@ -1,0 +1,122 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Icon from '../components/Icon.astro';
+import { SITE } from '../site.config';
+---
+
+<BaseLayout title="关于" description={`关于 ${SITE.author} 和这个博客`}>
+  <h1 class="page-title">关于</h1>
+  <p class="page-subtitle">关于我，以及这个小站。</p>
+
+  <div class="about-card">
+    <img src="/avatar.svg" alt={SITE.author} class="about-avatar" width="96" height="96" />
+    <div class="about-intro">
+      <h2>{SITE.author}</h2>
+      <p>
+        中国科学院大学（UCAS）2024 级本科生，人工智能专业。
+        希望在代码的世界里走得更深一些，也希望能为社区做出自己的贡献。
+      </p>
+      <div class="about-links">
+        <a href={SITE.github} target="_blank" rel="noopener" class="about-link">
+          <Icon name="github" size={16} /> GitHub
+        </a>
+        {
+          SITE.email && (
+            <a href={`mailto:${SITE.email}`} class="about-link">
+              <Icon name="mail" size={16} /> Email
+            </a>
+          )
+        }
+        <a href="/rss.xml" class="about-link">
+          <Icon name="rss" size={16} /> RSS
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="prose about-prose">
+    <h2>这个博客</h2>
+    <p>
+      「学海无涯」取自 <em>书山有路勤为径，学海无涯苦作舟</em>。
+      这里主要存放我的 AI 学习笔记、课程整理，偶尔也会写一些生活随想。
+      如果某篇笔记恰好帮到了你，那就再好不过了。
+    </p>
+    <h2>关于本站</h2>
+    <ul>
+      <li>基于 <a href="https://astro.build" target="_blank" rel="noopener">Astro</a> 构建，静态生成，全站无跟踪脚本</li>
+      <li>部署在 GitHub Pages，源码开放</li>
+      <li>支持全文搜索、深浅双主题、数学公式与 RSS 订阅</li>
+    </ul>
+    <h2>联系我</h2>
+    <p>
+      对文章内容有疑问或想交换友链，欢迎发邮件或在 GitHub 上找到我。
+    </p>
+  </div>
+</BaseLayout>
+
+<style>
+  .about-card {
+    display: flex;
+    align-items: center;
+    gap: 28px;
+    padding: 30px 34px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    box-shadow: var(--shadow);
+    margin-bottom: 36px;
+  }
+
+  .about-avatar {
+    border-radius: 26px;
+    flex-shrink: 0;
+    box-shadow: var(--shadow);
+  }
+
+  .about-intro h2 {
+    margin: 0 0 8px;
+    font-family: var(--font-serif);
+    font-size: 1.5rem;
+  }
+
+  .about-intro p {
+    margin: 0 0 14px;
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    line-height: 1.8;
+  }
+
+  .about-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .about-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 6px 14px;
+    font-size: 0.85rem;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    color: var(--text-secondary);
+    transition: all 0.18s ease;
+  }
+
+  .about-link:hover {
+    color: var(--accent);
+    border-color: var(--accent);
+    background: var(--accent-soft);
+  }
+
+  @media (max-width: 640px) {
+    .about-card {
+      flex-direction: column;
+      text-align: center;
+    }
+    .about-links {
+      justify-content: center;
+    }
+  }
+</style>

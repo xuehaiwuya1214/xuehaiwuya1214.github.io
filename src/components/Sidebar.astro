@@ -1,0 +1,328 @@
+---
+import { SITE, NAV } from '../site.config';
+import Icon from './Icon.astro';
+
+const pathname = Astro.url.pathname.replace(/\/+$/, '') || '/';
+const currentYear = new Date().getFullYear();
+const yearRange =
+  currentYear > SITE.startYear ? `${SITE.startYear}–${currentYear}` : `${SITE.startYear}`;
+const isActive = (href: string) => {
+  const target = href.replace(/\/+$/, '') || '/';
+  if (target === '/') return pathname === '/' || pathname.startsWith('/page/');
+  return pathname === target || pathname.startsWith(target + '/');
+};
+---
+
+<aside class="sidebar">
+  <div class="sidebar-inner">
+    <div class="site-head">
+      <a href="/" class="avatar-link" aria-label="返回首页">
+        <img src="/avatar.svg" alt={SITE.author} class="avatar" width="76" height="76" />
+      </a>
+      <div class="site-title-group">
+        <a href="/" class="site-title">{SITE.title}</a>
+        <p class="site-tagline">{SITE.tagline}</p>
+      </div>
+      <button class="nav-toggle" aria-label="打开菜单" aria-expanded="false">
+        <span class="icon-menu"><Icon name="menu" size={22} /></span>
+        <span class="icon-close"><Icon name="x" size={22} /></span>
+      </button>
+    </div>
+
+    <div class="sidebar-body" id="sidebar-body">
+      <nav class="site-nav" aria-label="站点导航">
+        <ul>
+          {
+            NAV.map((item) => (
+              <li>
+                <a
+                  href={item.href}
+                  class:list={['nav-link', { active: isActive(item.href) }]}
+                  aria-current={isActive(item.href) ? 'page' : undefined}
+                >
+                  <Icon name={item.icon} size={17} />
+                  <span>{item.label}</span>
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </nav>
+
+      <div class="sidebar-foot">
+        <div class="social-row">
+          <a href={SITE.github} target="_blank" rel="noopener" class="social-link" aria-label="GitHub" title="GitHub">
+            <Icon name="github" size={18} />
+          </a>
+          {
+            SITE.email && (
+              <a href={`mailto:${SITE.email}`} class="social-link" aria-label="邮箱" title="邮箱">
+                <Icon name="mail" size={18} />
+              </a>
+            )
+          }
+          <a href="/rss.xml" class="social-link" aria-label="RSS 订阅" title="RSS 订阅">
+            <Icon name="rss" size={18} />
+          </a>
+          <button class="social-link theme-toggle" aria-label="切换深色 / 浅色模式" title="切换深色 / 浅色模式">
+            <span class="icon-sun"><Icon name="sun" size={18} /></span>
+            <span class="icon-moon"><Icon name="moon" size={18} /></span>
+          </button>
+        </div>
+        <p class="copyright">
+          {`© ${yearRange} ${SITE.author}`}
+          <br />
+          <span class="powered">Powered by <a href="https://astro.build" target="_blank" rel="noopener">Astro</a></span>
+        </p>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<style>
+  .sidebar-inner {
+    position: sticky;
+    top: 0;
+    display: flex;
+    flex-direction: column;
+    max-height: 100vh;
+    padding: 56px 0 32px;
+  }
+
+  .site-head {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+  }
+
+  .avatar {
+    display: block;
+    border-radius: 22px;
+    box-shadow: var(--shadow);
+    transition: transform 0.3s ease;
+  }
+
+  .avatar-link:hover .avatar {
+    transform: rotate(-6deg) scale(1.04);
+  }
+
+  .site-title {
+    font-family: var(--font-serif);
+    font-size: 1.65rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    color: var(--text);
+  }
+
+  .site-title:hover {
+    color: var(--accent);
+  }
+
+  .site-tagline {
+    margin: 6px 0 0;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    line-height: 1.6;
+  }
+
+  .nav-toggle {
+    display: none;
+  }
+
+  .sidebar-body {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    margin-top: 28px;
+  }
+
+  .site-nav ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .nav-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 9px 14px;
+    margin-left: -14px;
+    border-radius: 10px;
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    transition: all 0.18s ease;
+  }
+
+  .nav-link:hover {
+    color: var(--text);
+    background: var(--bg-soft);
+  }
+
+  .nav-link.active {
+    color: var(--accent);
+    background: var(--accent-soft);
+    font-weight: 600;
+  }
+
+  .sidebar-foot {
+    margin-top: auto;
+    padding-top: 32px;
+  }
+
+  .social-row {
+    display: flex;
+    gap: 6px;
+    margin-left: -8px;
+  }
+
+  .social-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    color: var(--text-muted);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    transition: all 0.18s ease;
+  }
+
+  .social-link:hover {
+    color: var(--accent);
+    background: var(--accent-soft);
+  }
+
+  .theme-toggle .icon-moon,
+  :global([data-theme='dark']) .theme-toggle .icon-sun {
+    display: none;
+  }
+
+  :global([data-theme='dark']) .theme-toggle .icon-moon {
+    display: inline-flex;
+  }
+
+  .theme-toggle span,
+  .nav-toggle span {
+    display: inline-flex;
+  }
+
+  .copyright {
+    margin: 14px 0 0;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    line-height: 1.7;
+  }
+
+  .powered a {
+    color: var(--text-muted);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  .powered a:hover {
+    color: var(--accent);
+  }
+
+  /* ---------- 移动端：顶栏 + 抽屉 ---------- */
+  @media (max-width: 940px) {
+    .sidebar-inner {
+      position: static;
+      max-height: none;
+      padding: 18px 0 0;
+    }
+
+    .site-head {
+      flex-direction: row;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 13px;
+    }
+
+    .site-title {
+      font-size: 1.25rem;
+    }
+
+    .site-tagline {
+      display: none;
+    }
+
+    .nav-toggle {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-left: auto;
+      width: 40px;
+      height: 40px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--bg-card);
+      color: var(--text-secondary);
+      cursor: pointer;
+    }
+
+    .nav-toggle .icon-close,
+    .sidebar.open .nav-toggle .icon-menu {
+      display: none;
+    }
+
+    .sidebar.open .nav-toggle .icon-close {
+      display: inline-flex;
+    }
+
+    .sidebar-body {
+      display: none;
+      margin-top: 16px;
+      padding: 16px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      box-shadow: var(--shadow-lift);
+    }
+
+    .sidebar.open .sidebar-body {
+      display: flex;
+    }
+
+    .nav-link {
+      margin-left: 0;
+    }
+
+    .sidebar-foot {
+      padding-top: 18px;
+      margin-top: 14px;
+      border-top: 1px dashed var(--border);
+    }
+  }
+</style>
+
+<script>
+  // 移动端菜单开关
+  const sidebar = document.querySelector('.sidebar');
+  const toggle = document.querySelector('.nav-toggle');
+  toggle?.addEventListener('click', () => {
+    const open = sidebar?.classList.toggle('open');
+    toggle.setAttribute('aria-expanded', String(!!open));
+  });
+
+  // 深色 / 浅色切换
+  document.querySelector('.theme-toggle')?.addEventListener('click', () => {
+    const root = document.documentElement;
+    const next = root.dataset.theme === 'dark' ? 'light' : 'dark';
+    root.dataset.theme = next;
+    localStorage.setItem('theme', next);
+  });
+</script>

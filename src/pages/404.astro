@@ -1,0 +1,77 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout title="页面未找到">
+  <div class="lost">
+    <p class="lost-code">404</p>
+    <p class="lost-word">此处无岸，学海茫茫</p>
+    <p class="lost-hint">你要找的页面不存在，或许它已随波而去。</p>
+    <div class="lost-actions">
+      <a class="lost-btn primary" href="/">返回首页</a>
+      <a class="lost-btn" href="/search/">去搜索</a>
+      <a class="lost-btn" href="/archive/">看归档</a>
+    </div>
+  </div>
+</BaseLayout>
+
+<style>
+  .lost {
+    text-align: center;
+    padding: 90px 0;
+  }
+
+  .lost-code {
+    margin: 0;
+    font-family: var(--font-serif);
+    font-size: 6rem;
+    font-weight: 700;
+    line-height: 1;
+    color: var(--accent);
+    opacity: 0.85;
+  }
+
+  .lost-word {
+    margin: 18px 0 6px;
+    font-family: var(--font-serif);
+    font-size: 1.4rem;
+    letter-spacing: 0.1em;
+  }
+
+  .lost-hint {
+    margin: 0 0 34px;
+    color: var(--text-muted);
+    font-size: 0.92rem;
+  }
+
+  .lost-actions {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .lost-btn {
+    padding: 9px 24px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    color: var(--text-secondary);
+    font-size: 0.92rem;
+    transition: all 0.18s ease;
+  }
+
+  .lost-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .lost-btn.primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+
+  .lost-btn.primary:hover {
+    background: var(--accent-strong);
+  }
+</style>

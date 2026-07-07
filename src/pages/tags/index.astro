@@ -1,0 +1,59 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { getPosts, groupByTag } from '../../utils/posts';
+
+const posts = await getPosts();
+const tags = groupByTag(posts);
+const max = Math.max(1, ...[...tags.values()].map((l) => l.length));
+---
+
+<BaseLayout title="标签" description="全部标签">
+  <h1 class="page-title">标签</h1>
+  <p class="page-subtitle">{tags.size} 个标签</p>
+
+  <div class="tag-cloud">
+    {
+      [...tags.entries()].map(([name, list]) => (
+        <a
+          class="tag-item"
+          href={`/tags/${name}/`}
+          style={`--weight: ${0.9 + (list.length / max) * 0.5}`}
+        >
+          # {name}
+          <sup>{list.length}</sup>
+        </a>
+      ))
+    }
+  </div>
+</BaseLayout>
+
+<style>
+  .tag-cloud {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .tag-item {
+    font-size: calc(1rem * var(--weight));
+    padding: 6px 16px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    color: var(--text-secondary);
+    box-shadow: var(--shadow);
+    transition: all 0.2s ease;
+  }
+
+  .tag-item:hover {
+    color: var(--accent);
+    border-color: var(--accent);
+    transform: translateY(-2px);
+  }
+
+  .tag-item sup {
+    color: var(--text-muted);
+    font-size: 0.7em;
+    margin-left: 3px;
+  }
+</style>

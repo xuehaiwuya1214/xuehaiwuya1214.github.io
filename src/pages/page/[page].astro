@@ -1,0 +1,47 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PostCard from '../../components/PostCard.astro';
+import Pagination from '../../components/Pagination.astro';
+import { getPosts, sortForHome, type Post } from '../../utils/posts';
+import { SITE } from '../../site.config';
+
+export async function getStaticPaths() {
+  const posts = sortForHome(await getPosts());
+  const totalPages = Math.max(1, Math.ceil(posts.length / SITE.pageSize));
+  // 第 1 页由 index.astro 渲染，这里只生成第 2 页起
+  return Array.from({ length: Math.max(0, totalPages - 1) }, (_, i) => {
+    const page = i + 2;
+    return {
+      params: { page: String(page) },
+      props: {
+        posts: posts.slice((page - 1) * SITE.pageSize, page * SITE.pageSize),
+        page,
+        totalPages,
+      },
+    };
+  });
+}
+
+interface Props {
+  posts: Post[];
+  page: number;
+  totalPages: number;
+}
+
+const { posts, page, totalPages } = Astro.props;
+---
+
+<BaseLayout title={`第 ${page} 页`}>
+  <div class="post-list">
+    {posts.map((post) => <PostCard post={post} />)}
+  </div>
+  <Pagination current={page} total={totalPages} />
+</BaseLayout>
+
+<style>
+  .post-list {
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+  }
+</style>

@@ -1,0 +1,296 @@
+---
+import { render } from 'astro:content';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import TableOfContents from '../../components/TableOfContents.astro';
+import Giscus from '../../components/Giscus.astro';
+import Icon from '../../components/Icon.astro';
+import { getPosts, postUrl, type Post } from '../../utils/posts';
+import { excerpt, readingTime, fmtDate } from '../../utils/text';
+import 'katex/dist/katex.min.css';
+
+export async function getStaticPaths() {
+  const posts = await getPosts();
+  return posts.map((post, i) => ({
+    params: { id: post.id },
+    props: {
+      post,
+      newer: posts[i - 1] ?? null,
+      older: posts[i + 1] ?? null,
+    },
+  }));
+}
+
+interface Props {
+  post: Post;
+  newer: Post | null;
+  older: Post | null;
+}
+
+const { post, newer, older } = Astro.props;
+const { Content, headings } = await render(post);
+const rt = readingTime(post.body ?? '');
+const description = post.data.description ?? excerpt(post.body ?? '');
+---
+
+<BaseLayout title={post.data.title} description={description} ogType="article">
+  <div class="post-wrap">
+    <article class="post">
+      <header class="post-header">
+        <div class="post-cate">
+          <a class="category-link" href={`/categories/${post.data.category}/`}>
+            {post.data.category}
+          </a>
+        </div>
+        <h1 class="post-title">{post.data.title}</h1>
+        <div class="post-meta">
+          <span class="meta-item">
+            <Icon name="calendar" size={14} />
+            <time datetime={post.data.date.toISOString()}>{fmtDate(post.data.date)}</time>
+          </span>
+          {
+            post.data.updated && (
+              <span class="meta-item">
+                <Icon name="edit" size={14} />
+                更新于 {fmtDate(post.data.updated)}
+              </span>
+            )
+          }
+          <span class="meta-item">
+            <Icon name="clock" size={14} />
+            约 {rt.words} 字 · {rt.minutes} 分钟
+          </span>
+        </div>
+      </header>
+
+      <div class="prose">
+        <Content />
+      </div>
+
+      {
+        post.data.tags.length > 0 && (
+          <footer class="post-tags">
+            {post.data.tags.map((tag) => (
+              <a class="tag-pill" href={`/tags/${tag}/`}>
+                # {tag}
+              </a>
+            ))}
+          </footer>
+        )
+      }
+
+      <nav class="post-nav" aria-label="相邻文章">
+        {
+          older ? (
+            <a class="post-nav-card" href={postUrl(older)}>
+              <span class="nav-label">
+                <Icon name="arrow-left" size={14} /> 上一篇
+              </span>
+              <span class="nav-title">{older.data.title}</span>
+            </a>
+          ) : (
+            <span />
+          )
+        }
+        {
+          newer ? (
+            <a class="post-nav-card next" href={postUrl(newer)}>
+              <span class="nav-label">
+                下一篇 <Icon name="arrow-right" size={14} />
+              </span>
+              <span class="nav-title">{newer.data.title}</span>
+            </a>
+          ) : (
+            <span />
+          )
+        }
+      </nav>
+
+      <Giscus />
+    </article>
+
+    <aside class="post-side">
+      <div class="post-side-inner">
+        <TableOfContents headings={headings} />
+        <button class="back-top" aria-label="回到顶部">
+          <Icon name="chevron-up" size={15} />
+          回到顶部
+        </button>
+      </div>
+    </aside>
+  </div>
+</BaseLayout>
+
+<style>
+  .post-wrap {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 210px;
+    gap: 48px;
+  }
+
+  @media (max-width: 1160px) {
+    .post-wrap {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .post-side {
+      display: none;
+    }
+  }
+
+  .post-header {
+    margin-bottom: 36px;
+    padding-bottom: 28px;
+    border-bottom: 1px dashed var(--border-strong);
+  }
+
+  .post-cate {
+    margin-bottom: 10px;
+  }
+
+  .post-title {
+    margin: 0 0 16px;
+    font-family: var(--font-serif);
+    font-size: 2.1rem;
+    font-weight: 700;
+    line-height: 1.4;
+    letter-spacing: 0.01em;
+  }
+
+  .post-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 18px;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+  }
+
+  .meta-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .post-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 40px;
+  }
+
+  .post-nav {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-top: 40px;
+  }
+
+  .post-nav-card {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    padding: 16px 18px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--bg-card);
+    transition: all 0.2s ease;
+  }
+
+  .post-nav-card:hover {
+    border-color: var(--accent);
+    box-shadow: var(--shadow);
+  }
+
+  .post-nav-card.next {
+    text-align: right;
+    align-items: flex-end;
+  }
+
+  .nav-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+  }
+
+  .nav-title {
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: var(--text);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .post-nav-card:hover .nav-title {
+    color: var(--accent);
+  }
+
+  @media (max-width: 640px) {
+    .post-title {
+      font-size: 1.6rem;
+    }
+    .post-nav {
+      grid-template-columns: 1fr;
+    }
+    .post-nav-card.next {
+      text-align: left;
+      align-items: flex-start;
+    }
+  }
+
+  .post-side-inner {
+    position: sticky;
+    top: 56px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    max-height: calc(100vh - 90px);
+    overflow-y: auto;
+  }
+
+  .back-top {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    align-self: flex-start;
+    padding: 6px 12px;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.18s ease;
+  }
+
+  .back-top:hover {
+    color: var(--accent);
+    border-color: var(--accent);
+  }
+</style>
+
+<script>
+  // 代码块复制按钮
+  for (const block of document.querySelectorAll('.prose pre.astro-code')) {
+    const btn = document.createElement('button');
+    btn.className = 'code-copy-btn';
+    btn.textContent = '复制';
+    btn.addEventListener('click', async () => {
+      const code = block.querySelector('code')?.textContent ?? '';
+      try {
+        await navigator.clipboard.writeText(code);
+        btn.textContent = '已复制 ✓';
+      } catch {
+        btn.textContent = '复制失败';
+      }
+      setTimeout(() => (btn.textContent = '复制'), 1600);
+    });
+    block.appendChild(btn);
+  }
+
+  // 回到顶部
+  document.querySelector('.back-top')?.addEventListener('click', () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+</script>

@@ -1,0 +1,149 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { getPosts, groupByYear, postUrl } from '../utils/posts';
+import { fmtMonthDay } from '../utils/text';
+
+const posts = await getPosts();
+const byYear = groupByYear(posts);
+---
+
+<BaseLayout title="归档" description="全部文章归档">
+  <h1 class="page-title">归档</h1>
+  <p class="page-subtitle">共 {posts.length} 篇文章，光阴的痕迹都在这里。</p>
+
+  <div class="timeline">
+    {
+      byYear.map(([year, yearPosts]) => (
+        <section class="year-group">
+          <h2 class="year-head">
+            <span class="year-num">{year}</span>
+            <span class="year-count">{yearPosts.length} 篇</span>
+          </h2>
+          <ul class="year-list">
+            {yearPosts.map((post) => (
+              <li class="archive-item">
+                <a href={postUrl(post)} class="archive-link">
+                  <time class="archive-date" datetime={post.data.date.toISOString()}>
+                    {fmtMonthDay(post.data.date)}
+                  </time>
+                  <span class="archive-title">{post.data.title}</span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ))
+    }
+  </div>
+</BaseLayout>
+
+<style>
+  .timeline {
+    position: relative;
+    padding-left: 24px;
+  }
+
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 4px;
+    top: 10px;
+    bottom: 10px;
+    width: 2px;
+    background: var(--border);
+  }
+
+  .year-group {
+    position: relative;
+    margin-bottom: 40px;
+  }
+
+  .year-head {
+    position: relative;
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin: 0 0 16px;
+  }
+
+  .year-head::before {
+    content: '';
+    position: absolute;
+    left: -27px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: 3px solid var(--bg);
+    box-shadow: 0 0 0 2px var(--accent-soft);
+  }
+
+  .year-num {
+    font-family: var(--font-serif);
+    font-size: 1.7rem;
+    font-weight: 700;
+  }
+
+  .year-count {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+  }
+
+  .year-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .archive-item {
+    position: relative;
+  }
+
+  .archive-item::before {
+    content: '';
+    position: absolute;
+    left: -24px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--border-strong);
+    transition: background 0.18s ease;
+  }
+
+  .archive-item:hover::before {
+    background: var(--accent);
+  }
+
+  .archive-link {
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    padding: 8px 12px;
+    border-radius: 9px;
+    transition: background 0.18s ease;
+  }
+
+  .archive-link:hover {
+    background: var(--bg-soft);
+  }
+
+  .archive-date {
+    flex-shrink: 0;
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    color: var(--text-muted);
+  }
+
+  .archive-title {
+    color: var(--text-secondary);
+    transition: color 0.18s ease;
+  }
+
+  .archive-link:hover .archive-title {
+    color: var(--accent);
+  }
+</style>

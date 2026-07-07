@@ -1,0 +1,245 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Icon from '../components/Icon.astro';
+---
+
+<BaseLayout title="搜索" description="站内全文搜索">
+  <h1 class="page-title">搜索</h1>
+  <p class="page-subtitle">支持标题、标签、分类与正文全文检索，多个关键词用空格分隔。</p>
+
+  <div class="search-box">
+    <Icon name="search" size={19} />
+    <input
+      type="search"
+      id="search-input"
+      placeholder="输入关键词，回车或稍候即可…"
+      autocomplete="off"
+      autofocus
+    />
+  </div>
+
+  <div id="search-stats" class="search-stats" hidden></div>
+  <div id="search-results" class="search-results"></div>
+</BaseLayout>
+
+<style>
+  .search-box {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 20px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    box-shadow: var(--shadow);
+    color: var(--text-muted);
+    transition: border-color 0.2s ease;
+  }
+
+  .search-box:focus-within {
+    border-color: var(--accent);
+  }
+
+  #search-input {
+    flex: 1;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-size: 1.05rem;
+    font-family: var(--font-sans);
+    color: var(--text);
+  }
+
+  .search-stats {
+    margin: 18px 4px 0;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+  }
+
+  .search-results {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-top: 18px;
+  }
+
+  .search-results :global(.result-card) {
+    display: block;
+    padding: 18px 22px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    transition: all 0.2s ease;
+  }
+
+  .search-results :global(.result-card:hover) {
+    border-color: var(--accent);
+    box-shadow: var(--shadow);
+  }
+
+  .search-results :global(.result-title) {
+    font-family: var(--font-serif);
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text);
+    margin: 0 0 6px;
+  }
+
+  .search-results :global(.result-card:hover .result-title) {
+    color: var(--accent);
+  }
+
+  .search-results :global(.result-snippet) {
+    font-size: 0.88rem;
+    color: var(--text-secondary);
+    line-height: 1.75;
+    margin: 0 0 8px;
+  }
+
+  .search-results :global(.result-meta) {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+  }
+
+  .search-results :global(mark) {
+    background: var(--accent-soft);
+    color: var(--accent-strong);
+    padding: 0 2px;
+    border-radius: 3px;
+    font-weight: 600;
+  }
+</style>
+
+<script>
+  type Doc = {
+    title: string;
+    url: string;
+    date: string;
+    category: string;
+    tags: string[];
+    body: string;
+  };
+
+  const input = document.getElementById('search-input') as HTMLInputElement;
+  const statsEl = document.getElementById('search-stats')!;
+  const resultsEl = document.getElementById('search-results')!;
+
+  let docs: Doc[] | null = null;
+
+  async function loadIndex(): Promise<Doc[]> {
+    if (!docs) {
+      const res = await fetch('/search-index.json');
+      docs = (await res.json()) as Doc[];
+    }
+    return docs;
+  }
+
+  function escapeHtml(s: string): string {
+    return s
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function highlight(text: string, terms: string[]): string {
+    let html = escapeHtml(text);
+    for (const term of terms) {
+      const pattern = escapeHtml(term).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      html = html.replace(new RegExp(`(${pattern})`, 'gi'), '<mark>$1</mark>');
+    }
+    return html;
+  }
+
+  function search(query: string, index: Doc[]) {
+    const terms = query.toLowerCase().split(/\s+/).filter(Boolean);
+    if (terms.length === 0) return [];
+    const scored: { doc: Doc; score: number; snippetAt: number }[] = [];
+    for (const doc of index) {
+      const title = doc.title.toLowerCase();
+      const body = doc.body.toLowerCase();
+      const tags = doc.tags.join(' ').toLowerCase();
+      const category = doc.category.toLowerCase();
+      let score = 0;
+      let snippetAt = -1;
+      let matchAll = true;
+      for (const term of terms) {
+        let matched = false;
+        if (title.includes(term)) {
+          score += 10;
+          matched = true;
+        }
+        if (tags.includes(term)) {
+          score += 5;
+          matched = true;
+        }
+        if (category.includes(term)) {
+          score += 3;
+          matched = true;
+        }
+        const pos = body.indexOf(term);
+        if (pos !== -1) {
+          score += 1;
+          matched = true;
+          if (snippetAt === -1) snippetAt = pos;
+        }
+        if (!matched) {
+          matchAll = false;
+          break;
+        }
+      }
+      if (matchAll) scored.push({ doc, score, snippetAt });
+    }
+    return scored.sort((a, b) => b.score - a.score);
+  }
+
+  function render(query: string, results: ReturnType<typeof search>, terms: string[]) {
+    statsEl.hidden = query.trim() === '';
+    statsEl.textContent = `找到 ${results.length} 篇与「${query.trim()}」相关的文章`;
+    resultsEl.innerHTML = results
+      .slice(0, 50)
+      .map(({ doc, snippetAt }) => {
+        const start = Math.max(0, snippetAt - 40);
+        const snippet =
+          snippetAt === -1
+            ? doc.body.slice(0, 110)
+            : (start > 0 ? '…' : '') + doc.body.slice(start, start + 130) + '…';
+        return `
+          <a class="result-card" href="${doc.url}">
+            <p class="result-title">${highlight(doc.title, terms)}</p>
+            <p class="result-snippet">${highlight(snippet, terms)}</p>
+            <p class="result-meta">${doc.date} · ${escapeHtml(doc.category)}${
+              doc.tags.length ? ' · ' + doc.tags.map((t) => '#' + escapeHtml(t)).join(' ') : ''
+            }</p>
+          </a>`;
+      })
+      .join('');
+  }
+
+  let timer: ReturnType<typeof setTimeout>;
+  async function onInput() {
+    const query = input.value;
+    const index = await loadIndex();
+    const terms = query.toLowerCase().split(/\s+/).filter(Boolean);
+    render(query, search(query, index), terms);
+    // 同步到地址栏，方便分享搜索结果
+    const url = new URL(location.href);
+    if (query.trim()) url.searchParams.set('q', query.trim());
+    else url.searchParams.delete('q');
+    history.replaceState(null, '', url);
+  }
+
+  input.addEventListener('input', () => {
+    clearTimeout(timer);
+    timer = setTimeout(onInput, 180);
+  });
+
+  // 支持 /search/?q=xxx 直接进入
+  const initial = new URL(location.href).searchParams.get('q');
+  if (initial) {
+    input.value = initial;
+    onInput();
+  }
+  // 预加载索引，首次输入零等待
+  loadIndex();
+</script>

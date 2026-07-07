@@ -1,0 +1,69 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Icon from '../../components/Icon.astro';
+import { getPosts, groupByCategory } from '../../utils/posts';
+
+const posts = await getPosts();
+const categories = groupByCategory(posts);
+---
+
+<BaseLayout title="分类" description="文章分类">
+  <h1 class="page-title">分类</h1>
+  <p class="page-subtitle">{categories.size} 个分类</p>
+
+  <div class="cate-grid">
+    {
+      [...categories.entries()].map(([name, list]) => (
+        <a class="cate-card" href={`/categories/${name}/`}>
+          <span class="cate-icon">
+            <Icon name="folder" size={22} />
+          </span>
+          <span class="cate-name">{name}</span>
+          <span class="cate-count">{list.length} 篇</span>
+        </a>
+      ))
+    }
+  </div>
+</BaseLayout>
+
+<style>
+  .cate-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+  }
+
+  .cate-card {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 22px 24px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    box-shadow: var(--shadow);
+    transition: all 0.2s ease;
+  }
+
+  .cate-card:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-lift);
+    border-color: var(--accent);
+  }
+
+  .cate-icon {
+    color: var(--accent);
+  }
+
+  .cate-name {
+    font-family: var(--font-serif);
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .cate-count {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+  }
+</style>
